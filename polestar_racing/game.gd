@@ -15,6 +15,7 @@ var car_color := -1          # -1 = cor original do carro
 var mode := "solo"           # solo | online
 var quality := 1             # 0 baixa, 1 media, 2 alta
 var volume := 0.8
+var control_layout := 0       # 0: direção à esquerda; 1: direção à direita
 var race_setup := {}
 var records := {}            # track_id -> melhor volta (s)
 
@@ -33,6 +34,7 @@ func load_settings() -> void:
     car_color = int(cf.get_value("player", "color", car_color))
     quality = int(cf.get_value("settings", "quality", quality))
     volume = float(cf.get_value("settings", "volume", volume))
+    control_layout = clampi(int(cf.get_value("settings", "control_layout", control_layout)), 0, 1)
     laps = int(cf.get_value("race", "laps", laps))
     ai_count = int(cf.get_value("race", "ai", ai_count))
     difficulty = int(cf.get_value("race", "difficulty", difficulty))
@@ -53,6 +55,7 @@ func save_settings() -> void:
     cf.set_value("player", "color", car_color)
     cf.set_value("settings", "quality", quality)
     cf.set_value("settings", "volume", volume)
+    cf.set_value("settings", "control_layout", control_layout)
     cf.set_value("race", "laps", laps)
     cf.set_value("race", "ai", ai_count)
     cf.set_value("race", "difficulty", difficulty)
