@@ -108,17 +108,6 @@ jobs:
           set -euo pipefail
           godot --headless --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --editor --import --quit
 
-      - name: Install Godot Android Gradle build template
-        shell: bash
-        run: |
-          set -euo pipefail
-          godot --headless --editor --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --install-android-build-template --quit
-          test -f "$PROJECT_PATH/android/build/gradlew" || {
-            echo "ERRO: o template Gradle Android não foi instalado."
-            find "$PROJECT_PATH/android" -maxdepth 4 -type f | head -80 || true
-            exit 1
-          }
-
       - name: Export debug APK
         shell: bash
         run: |
@@ -141,6 +130,7 @@ jobs:
         run: |
           set -euo pipefail
           godot --headless --verbose --path "$GITHUB_WORKSPACE/$PROJECT_PATH" \
+            --install-android-build-template \
             --export-release "Android AAB" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
           test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
 
