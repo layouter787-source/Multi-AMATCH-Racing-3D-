@@ -118,8 +118,8 @@ jobs:
             find /opt /usr/lib /root -maxdepth 5 -type f -name sdkmanager 2>/dev/null | head -20 || true
             exit 1
           }
-          JAVA_ROOT="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")") }"
-          test -x "$JAVA_ROOT/bin/java" || JAVA_ROOT="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          JAVA_BIN="$(command -v java)"
+          JAVA_ROOT="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$JAVA_BIN")")")}"
           test -x "$JAVA_ROOT/bin/java"
           echo "Android SDK: $SDK_ROOT"
           echo "Java SDK: $JAVA_ROOT"
