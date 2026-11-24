@@ -7,6 +7,10 @@ config/name="Multi-AMATCH Racing 3D"
 run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+application/boot_splash/show_image=true
+application/boot_splash/image="res://icon.svg"
+application/boot_splash/fullsize=false
+application/boot_splash/bg_color=Color(0.025, 0.045, 0.07, 1)
 config/quit_on_go_back=false
 
 [autoload]
