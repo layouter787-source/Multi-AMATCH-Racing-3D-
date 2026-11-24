@@ -102,6 +102,46 @@ jobs:
             -alias "$GODOT_ANDROID_KEYSTORE_RELEASE_USER" >/dev/null
           echo "Keystore restaurada e validada."
 
+      - name: Configure Android SDK and Java paths for Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [ -z "$SDK_ROOT" ]; then
+            for candidate in /opt/android-sdk /usr/lib/android-sdk "$HOME/Android/Sdk"; do
+              if [ -d "$candidate" ]; then SDK_ROOT="$candidate"; break; fi
+            done
+          fi
+          test -n "$SDK_ROOT" && test -d "$SDK_ROOT" || {
+            echo "ERRO: não foi possível localizar o Android SDK."
+            env | grep -E 'ANDROID|JAVA_HOME' || true
+            find /opt /usr/lib /root -maxdepth 5 -type f -name sdkmanager 2>/dev/null | head -20 || true
+            exit 1
+          }
+          JAVA_ROOT="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")") }"
+          test -x "$JAVA_ROOT/bin/java" || JAVA_ROOT="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          test -x "$JAVA_ROOT/bin/java"
+          echo "Android SDK: $SDK_ROOT"
+          echo "Java SDK: $JAVA_ROOT"
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_ROOT"
+          EOF
+          if [ -x "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+            "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          elif command -v sdkmanager >/dev/null 2>&1; then
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          fi
+          test -d "$SDK_ROOT/platform-tools"
+          test -d "$SDK_ROOT/build-tools"
+          echo "SDK e Java configurados para o Godot."
+
       - name: Import Godot resources
         shell: bash
         run: |
