@@ -31,29 +31,63 @@ jobs:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
+      - name: Install CI system dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v apt-get >/dev/null 2>&1; then
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl unzip fontconfig
+            rm -rf /var/lib/apt/lists/*
+          fi
+
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Verify Godot and Android export templates
+      - name: Install exact Godot 4.7.2 export templates
         shell: bash
         run: |
           set -euo pipefail
-          test -f "$PROJECT_PATH/project.godot" || { echo "ERRO: falta $PROJECT_PATH/project.godot."; exit 1; }
-          test -f "$PROJECT_PATH/export_presets.cfg" || { echo "ERRO: falta $PROJECT_PATH/export_presets.cfg."; exit 1; }
+          TEMPLATE_URL="https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz"
+          TEMPLATE_ARCHIVE="$RUNNER_TEMP/godot-4.7.2-templates.tpz"
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          curl -fL --retry 3 --retry-delay 2 "$TEMPLATE_URL" -o "$TEMPLATE_ARCHIVE"
+          unzip -q "$TEMPLATE_ARCHIVE" -d "$RUNNER_TEMP/godot-template-unpack"
+          if [ -d "$RUNNER_TEMP/godot-template-unpack/templates" ]; then
+            cp -a "$RUNNER_TEMP/godot-template-unpack/templates/." "$TEMPLATE_DIR/"
+          else
+            cp -a "$RUNNER_TEMP/godot-template-unpack/." "$TEMPLATE_DIR/"
+          fi
+          test -f "$TEMPLATE_DIR/android_debug.apk" || {
+            echo "ERRO: android_debug.apk não encontrado nos templates oficiais."
+            find "$RUNNER_TEMP/godot-template-unpack" -maxdepth 3 -type f | head -80
+            exit 1
+          }
+          test -f "$TEMPLATE_DIR/android_release.apk"
           GODOT_ACTUAL="$(godot --version)"
           echo "Godot instalado: $GODOT_ACTUAL"
           case "$GODOT_ACTUAL" in
             4.7.2.stable*) ;;
             *) echo "ERRO: esperava Godot 4.7.2 stable."; exit 1 ;;
           esac
-          test -d "$HOME/.local/share/godot/export_templates/4.7.2.stable" || {
-            echo "ERRO: templates 4.7.2.stable não encontrados na imagem CI."
+          echo "Templates Android 4.7.2 instalados e verificados."
+
+      - name: Validate project and Android toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$PROJECT_PATH/project.godot"
+          test -f "$PROJECT_PATH/export_presets.cfg"
+          java -version
+          command -v gradle
+          gradle --version
+          test -n "${ANDROID_HOME:-}" || test -n "${ANDROID_SDK_ROOT:-}" || {
+            echo "ERRO: Android SDK não configurado na imagem CI."
             exit 1
           }
-          java -version
-          gradle --version
 
       - name: Restore and validate release keystore
         shell: bash
@@ -83,7 +117,7 @@ jobs:
           godot --headless --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --install-android-build-template --quit
           test -f "$PROJECT_PATH/android/build/gradlew" || {
             echo "ERRO: o template Gradle Android não foi instalado."
-            find "$PROJECT_PATH/android" -maxdepth 3 -type f | head -80 || true
+            find "$PROJECT_PATH/android" -maxdepth 4 -type f | head -80 || true
             exit 1
           }
 
@@ -111,6 +145,14 @@ jobs:
           godot --headless --verbose --path "$GITHUB_WORKSPACE/$PROJECT_PATH" \
             --export-release "Android AAB" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
           test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
+
+      - name: Verify APK signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          for apk in "$GITHUB_WORKSPACE"/build/android/*-release.apk; do
+            apksigner verify --verbose "$apk"
+          done
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
