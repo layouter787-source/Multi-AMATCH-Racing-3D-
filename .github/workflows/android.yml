@@ -206,13 +206,26 @@ jobs:
           }
           echo "Assinaturas do APK Release e do AAB verificadas."
 
-      - name: Upload Android artifacts
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Multi-AMATCH-Racing-3D-Android-Godot-4.7.2
-          path: |
-            build/android/${{ env.EXPORT_NAME }}-debug.apk
-            build/android/${{ env.EXPORT_NAME }}-release.apk
-            build/android/${{ env.EXPORT_NAME }}.aab
+          name: Multi-AMATCH-Racing-3D-Debug-APK
+          path: build/android/${{ env.EXPORT_NAME }}-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload signed Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Multi-AMATCH-Racing-3D-Release-APK
+          path: build/android/${{ env.EXPORT_NAME }}-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload signed Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Multi-AMATCH-Racing-3D-AAB
+          path: build/android/${{ env.EXPORT_NAME }}.aab
           if-no-files-found: error
           retention-days: 14
