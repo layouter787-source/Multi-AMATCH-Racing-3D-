@@ -1,0 +1,29 @@
+MULTIJOGADOR LOCAL (estilo Mini Militia) - Polestar Racing
+===========================================================
+COMO JOGAR
+1. Todos os aparelhos no MESMO Wi-Fi, ou no hotspot ("ponto de acesso") de um celular.
+2. Um jogador toca em "Criar sala". Os outros abrem "Multijogador online": a sala aparece
+   sozinha na lista (se nao aparecer, "Procurar de novo" ou digite o IP mostrado no anfitriao).
+3. Na sala: escolha o carro e a cor, toque em ESTOU PRONTO. O anfitriao escolhe pista, voltas e IA
+   e inicia quando todos estiverem prontos. Depois da corrida todos voltam para a mesma sala.
+- O anfitriao pode remover jogadores; o ping de cada um aparece na lista.
+- Ate 8 jogadores (humanos + IA); IA roda no anfitriao.
+
+SEM INTERNET / SEM WI-FI
+Ligue o hotspot em um celular, conecte os outros aparelhos nele e use normalmente. O Mini Militia
+tambem funciona assim (rede local), nao por Bluetooth.
+
+BLUETOOTH
+O Godot nao tem multijogador por Bluetooth. Precisaria de um plugin nativo (Android/iOS) que eu nao
+consigo criar nem testar aqui. Use Wi-Fi/hotspot, que e mais rapido e estavel para corrida.
+
+PERMISSOES NA EXPORTACAO
+Android (Projeto > Exportar > Android): marque INTERNET, ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE
+e CHANGE_WIFI_MULTICAST_STATE.
+iOS: no Info.plist adicione NSLocalNetworkUsageDescription ("Encontrar partidas na rede local") e,
+se quiser, NSBonjourServices. O iOS pede permissao de "Rede local" na primeira vez: aceite.
+Portas: UDP 7777 (jogo) e UDP 7778 (descoberta de salas). Alguns Wi-Fi publicos/de hotel bloqueiam
+comunicacao entre aparelhos ("isolamento de clientes"): nesse caso use hotspot do celular.
+
+TESTE RAPIDO NO PC
+Abra duas instancias do jogo: uma cria a sala, a outra procura e entra pelo IP 127.0.0.1.

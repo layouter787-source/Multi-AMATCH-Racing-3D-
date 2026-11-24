@@ -1,0 +1,89 @@
+POLESTAR RACING v2 - projeto Godot 4 (4.3 ou mais novo)
+
+COMO ABRIR
+1. Gerenciador de projetos > Importar > escolha o .zip (ou a pasta com project.godot).
+2. Espere a importacao dos .glb (a primeira vez demora por causa das 5 pistas e 7 carros).
+3. Se aparecer erro de "class not found", feche e reabra o projeto uma vez.
+4. Play (F5). A cena inicial e menu.tscn.
+
+CARROS (garagem): Porsche 911 Turbo S, Lamborghini Revuelto, Ferrari SF90, Aston Martin Valkyrie,
+McLaren 750S, Porsche 911 GT3 RS e Polestar 2. Velocidade maxima no jogo: 100 km/h
+(campo "max_kmh" em cars_data.gd; mude para 150, 200... se quiser).
+
+PISTAS: Vale Verde, Deserto Rubi, Costa Azul, Montanha Nevada, Cidade Noturna.
+
+MULTIJOGADOR ONLINE
+- Um jogador: Multijogador > Criar sala. Os outros: Entrar (IP do anfitriao) ou tocar na sala listada
+  (mesma rede Wi-Fi aparece sozinha).
+- Pela internet: o jogo tenta abrir a porta 7777 (UDP) no roteador via UPnP e mostra o IP publico na sala.
+  Se o roteador nao suportar UPnP, libere a porta 7777 UDP manualmente.
+- O anfitriao tambem pode colocar carros da IA na corrida.
+
+CONTROLES
+Teclado: W/S, A/D, Espaco (drift), R (reset), C (camera), Esc (pausa)
+Toque: botoes na tela (aparecem sozinhos no celular/tablet)
+Gamepad: gatilhos, analogico, A drift, X reset, Y camera, Start pausa
+
+COMO ADICIONAR UM CARRO NOVO
+1. Coloque o .glb em res://cars/ com estes nomes de no: Body (malha), Wheel_FL_Steer > Wheel_FL,
+   Wheel_FR_Steer > Wheel_FR, Wheel_RL, Wheel_RR. Material da pintura chamado "Paint",
+   lanternas "Taillight" (opcional).
+2. Copie uma entrada em cars_data.gd e ajuste nome, model, massa, engine, posicao das rodas, colisao.
+(Ou me mande a imagem do carro que eu modelo e entrego pronto.)
+
+ARQUIVOS
+menu.gd/.tscn ........ menus (solo, garagem, online, sala, configuracoes)
+race_scene.gd/.tscn .. monta a corrida
+car.gd ............... fisica do carro      ai_driver.gd ... piloto automatico
+remote_car.gd ........ carros de outros jogadores   net.gd ... rede (autoload Net)
+race_manager.gd ...... voltas, posicoes, tempos
+hud.gd, touch_controls.gd, ui_kit.gd .. interface
+env_builder.gd, water.gdshader ... ceu, neblina, agua
+game.gd (autoload Game) ... configuracoes e recordes salvos
+cars_data.gd / tracks_data.gd ... dados gerados dos carros e pistas
+cars/*.glb, tracks/*.glb ... modelos
+
+
+CONTROLOS DO CARRO (versao atualizada)
+--------------------------------------
+PC / teclado:
+- W ou Seta para cima: acelerar para a frente.
+- S ou Seta para baixo: travar; depois de quase parar, manter premido para marcha-atras.
+- A/D ou setas esquerda/direita: virar.
+- Espaco: travão de mão / drift (combinar com esquerda ou direita).
+- R: reposicionar o carro.
+- C: mudar a câmara.
+
+Telemóvel: usar ACEL. para avançar, RÉ / FREIO para travar e, quando quase parado,
+continuar a premir para recuar. Premir DRIFT enquanto vira para iniciar a derrapagem.
+Os controlos de toque suportam vários dedos em simultâneo.
+
+
+=== VERSAO 3 - NOVIDADES ===
+FISICA (car.gd): cambio automatico com 6 marchas e curva de torque, limite de tracao,
+ABS progressivo, transferencia de peso (acelerar/frear), anti-rolagem, estabilidade lateral,
+contra-esterco automatico, pedais com resposta suave, colisao com faiscas e tremida de camera,
+carro capotado volta sozinho. Folga (ride_height) entre chassi e pneu em car.gd.
+INTERIOR (car_interior.gd): bancos, volante que gira, painel com ponteiros, pedais, console,
+retrovisor, colunas, piloto de capacete. Camera C (3a opcao) = dentro do carro.
+LINHA VERMELHA (racing_line.gd): tecla L liga/desliga. Mais forte nas zonas de frenagem.
+CENARIO (scenery.gd): sem mato; palmeiras e folhagem tropical, postes de luz; na cidade,
+arranha-ceus com janelas acesas e neon.
+DIA E NOITE (day_night.gd): sol desce, ceu laranja, estrelas, lua, farois ligam sozinhos.
+Velocidade do ciclo: hours_per_second em day_night.gd.
+Obs.: escrito sem poder rodar o Godot aqui. Se aparecer erro de script, me mande a mensagem.
+
+=== MODELOS PRONTOS (.glb de verdade) ===
+Porsche GT3 RS, Ferrari SF90 XX Stradale e Aston Martin Valkyrie agora usam os modelos detalhados que
+voce mandou (carroceria, interior completo, rodas, freios). Carros novos: Lamborghini Veneno e
+Mercedes-Benz Vision One-Eleven. Conversao em tools_modelagem/converter_glb/ (frente = -Z, escala em
+metros, rodas separadas para girar/esterçar, pintura = material "Paint", texturas reduzidas a 1024 px).
+Animacoes no jogo: rodas girando e esterçando, suspensao e rolagem pela fisica, luz de freio, farois,
+estouros de fogo no escapamento ao tirar o pe em alta rotacao, tremida de camera em batidas.
+Camera de cockpit usa o campo "eye" de cada carro em cars_data.gd (ajuste se o olho ficar torto).
+Os modelos tem 80 mil a 370 mil triangulos; o Godot gera LOD sozinho ao importar.
+
+=== MULTIJOGADOR LOCAL ===
+Veja MULTIPLAYER.txt. Descoberta de salas por broadcast + varredura da sub-rede (Wi-Fi e hotspot),
+sala com "pronto", troca de carro/cor, ping, remover jogador, protocolo versionado e volta para a sala.
+Bluetooth nao e suportado pelo Godot sem plugin nativo.
