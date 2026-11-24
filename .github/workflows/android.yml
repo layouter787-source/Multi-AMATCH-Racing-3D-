@@ -82,8 +82,6 @@ jobs:
           test -f "$PROJECT_PATH/project.godot"
           test -f "$PROJECT_PATH/export_presets.cfg"
           java -version
-          command -v gradle
-          gradle --version
           test -n "${ANDROID_HOME:-}" || test -n "${ANDROID_SDK_ROOT:-}" || {
             echo "ERRO: Android SDK não configurado na imagem CI."
             exit 1
