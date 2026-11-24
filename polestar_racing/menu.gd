@@ -127,7 +127,7 @@ func _ready() -> void:
     left.custom_minimum_size = Vector2(620, 0)
     left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     margin.add_child(left)
-    left.add_child(UI.label("POLESTAR RACING", 46, UI.ACCENT))
+    left.add_child(UI.label("MULTI-AMATCH RACING 3D", 42, UI.ACCENT))
     left.add_child(UI.label("Corrida · IA · Multijogador online", 20, Color(0.75, 0.8, 0.9)))
     _holder = PanelContainer.new()
     _holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -558,9 +558,20 @@ func _build_settings() -> Control:
     q.select(Game.quality)
     q.item_selected.connect(func(i): Game.quality = i)
     vb.add_child(UI.row("Gráficos", q))
+    var controls := OptionButton.new()
+    controls.custom_minimum_size = Vector2(0, 54)
+    controls.add_item("Direção à esquerda (recomendado)")
+    controls.add_item("Direção à direita")
+    controls.select(clampi(Game.control_layout, 0, 1))
+    controls.item_selected.connect(func(i):
+        Game.control_layout = i
+        Game.save_settings()
+    )
+    vb.add_child(UI.row("Controlos móveis", controls))
+    vb.add_child(UI.label("Escolhe o lado do volante virtual por botões. Acelerar, travar e drift ficam no lado oposto. Podes combinar vários botões ao mesmo tempo.", 17, Color(0.7, 0.78, 0.88)))
     var vr := _slider_row("Volume", 0, 100, int(Game.volume * 100.0), _set_volume)
     vb.add_child(vr)
-    vb.add_child(UI.label("Dica: se estiver lento no tablet, use Gráficos = Baixa.", 18, Color(0.7, 0.75, 0.85)))
+    vb.add_child(UI.label("Dica: em aparelhos modestos, usa Gráficos = Baixa para priorizar fluidez.", 18, Color(0.7, 0.75, 0.85)))
     vb.add_child(UI.btn("Voltar", _back_main, true))
     return vb
 
