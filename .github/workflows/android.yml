@@ -112,7 +112,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --install-android-build-template --quit
+          godot --headless --editor --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --install-android-build-template --quit
           test -f "$PROJECT_PATH/android/build/gradlew" || {
             echo "ERRO: o template Gradle Android não foi instalado."
             find "$PROJECT_PATH/android" -maxdepth 4 -type f | head -80 || true
