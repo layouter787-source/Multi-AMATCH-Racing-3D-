@@ -17,12 +17,12 @@ concurrency:
 
 jobs:
   export-android:
-    name: Export Android packages
+    name: Export Android packages (Godot 4.7.2)
     runs-on: ubuntu-24.04
     container:
-      image: barichello/godot-ci:4.3
+      image: barichello/godot-ci:4.7.2
     env:
-      GODOT_VERSION: "4.3"
+      GODOT_VERSION: "4.7.2"
       PROJECT_PATH: "polestar_racing"
       EXPORT_NAME: "Multi-AMATCH-Racing-3D"
       GODOT_ANDROID_KEYSTORE_RELEASE_PATH: "/tmp/multi-amatch-release.jks"
@@ -36,21 +36,24 @@ jobs:
         with:
           lfs: true
 
-      - name: Set up Godot export templates
+      - name: Verify Godot and Android export templates
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ~/.local/share/godot/export_templates ~/.config
-          if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable" ]; then
-            cp -a "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable" ~/.local/share/godot/export_templates/
-          fi
-          if [ -d /root/.config/godot ]; then
-            mkdir -p ~/.config/godot
-            cp -a /root/.config/godot/. ~/.config/godot/
-          fi
           test -f "$PROJECT_PATH/project.godot" || { echo "ERRO: falta $PROJECT_PATH/project.godot."; exit 1; }
           test -f "$PROJECT_PATH/export_presets.cfg" || { echo "ERRO: falta $PROJECT_PATH/export_presets.cfg."; exit 1; }
-          godot --version
+          GODOT_ACTUAL="$(godot --version)"
+          echo "Godot instalado: $GODOT_ACTUAL"
+          case "$GODOT_ACTUAL" in
+            4.7.2.stable*) ;;
+            *) echo "ERRO: esperava Godot 4.7.2 stable."; exit 1 ;;
+          esac
+          test -d "$HOME/.local/share/godot/export_templates/4.7.2.stable" || {
+            echo "ERRO: templates 4.7.2.stable não encontrados na imagem CI."
+            exit 1
+          }
+          java -version
+          gradle --version
 
       - name: Restore and validate release keystore
         shell: bash
@@ -72,6 +75,17 @@ jobs:
         run: |
           set -euo pipefail
           godot --headless --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --editor --import --quit
+
+      - name: Install Godot Android Gradle build template
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path "$GITHUB_WORKSPACE/$PROJECT_PATH" --install-android-build-template --quit
+          test -f "$PROJECT_PATH/android/build/gradlew" || {
+            echo "ERRO: o template Gradle Android não foi instalado."
+            find "$PROJECT_PATH/android" -maxdepth 3 -type f | head -80 || true
+            exit 1
+          }
 
       - name: Export debug APK
         shell: bash
@@ -101,7 +115,7 @@ jobs:
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Multi-AMATCH-Racing-3D-Android
+          name: Multi-AMATCH-Racing-3D-Android-Godot-4.7.2
           path: |
             build/android/${{ env.EXPORT_NAME }}-debug.apk
             build/android/${{ env.EXPORT_NAME }}-release.apk
