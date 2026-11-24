@@ -6,7 +6,7 @@ config_version=5
 config/name="Multi-AMATCH Racing 3D"
 run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://assets/icons/android/icon_192.webp"
+config/icon="res://icon.svg"
 config/quit_on_go_back=false
 
 [autoload]
