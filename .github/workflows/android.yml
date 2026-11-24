@@ -1,22 +1,23 @@
-name: Android APK
+name: Android APK and AAB
 
 on:
   push:
     branches: [main]
     paths:
       - "polestar_racing/**"
+      - ".github/workflows/android.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   export-android:
-    name: Export Android debug APK
+    name: Export Android packages
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.3
@@ -24,6 +25,11 @@ jobs:
       GODOT_VERSION: "4.3"
       PROJECT_PATH: "polestar_racing"
       EXPORT_NAME: "Multi-AMATCH-Racing-3D"
+      GODOT_ANDROID_KEYSTORE_RELEASE_PATH: "$RUNNER_TEMP/multi-amatch-release.jks"
+      GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_KEY_ALIAS }}
+      GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -42,9 +48,24 @@ jobs:
             mkdir -p ~/.config/godot
             cp -a /root/.config/godot/. ~/.config/godot/
           fi
-          test -f "$PROJECT_PATH/project.godot" || { echo "ERRO: falta $PROJECT_PATH/project.godot. Adiciona primeiro a pasta polestar_racing do pacote-fonte."; exit 1; }
+          test -f "$PROJECT_PATH/project.godot" || { echo "ERRO: falta $PROJECT_PATH/project.godot."; exit 1; }
           test -f "$PROJECT_PATH/export_presets.cfg" || { echo "ERRO: falta $PROJECT_PATH/export_presets.cfg."; exit 1; }
           godot --version
+
+      - name: Restore and validate release keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$GODOT_ANDROID_KEYSTORE_RELEASE_USER"
+          test -n "$GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$GODOT_ANDROID_KEYSTORE_RELEASE_PATH"
+          chmod 600 "$GODOT_ANDROID_KEYSTORE_RELEASE_PATH"
+          keytool -list -keystore "$GODOT_ANDROID_KEYSTORE_RELEASE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$GODOT_ANDROID_KEYSTORE_RELEASE_USER" >/dev/null
+          echo "Keystore restaurada e validada."
 
       - name: Import Godot resources
         shell: bash
@@ -61,10 +82,29 @@ jobs:
             --export-debug "Android" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}-debug.apk"
           test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}-debug.apk"
 
-      - name: Upload APK artifact
+      - name: Export signed release APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --verbose --path "$GITHUB_WORKSPACE/$PROJECT_PATH" \
+            --export-release "Android" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}-release.apk"
+          test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}-release.apk"
+
+      - name: Export signed Android App Bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --verbose --path "$GITHUB_WORKSPACE/$PROJECT_PATH" \
+            --export-release "Android AAB" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
+          test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
+
+      - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Multi-AMATCH-Racing-3D-Android-debug
-          path: build/android/${{ env.EXPORT_NAME }}-debug.apk
+          name: Multi-AMATCH-Racing-3D-Android
+          path: |
+            build/android/${{ env.EXPORT_NAME }}-debug.apk
+            build/android/${{ env.EXPORT_NAME }}-release.apk
+            build/android/${{ env.EXPORT_NAME }}.aab
           if-no-files-found: error
           retention-days: 14
