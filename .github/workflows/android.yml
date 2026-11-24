@@ -25,7 +25,7 @@ jobs:
       GODOT_VERSION: "4.3"
       PROJECT_PATH: "polestar_racing"
       EXPORT_NAME: "Multi-AMATCH-Racing-3D"
-      GODOT_ANDROID_KEYSTORE_RELEASE_PATH: "$RUNNER_TEMP/multi-amatch-release.jks"
+      GODOT_ANDROID_KEYSTORE_RELEASE_PATH: "/tmp/multi-amatch-release.jks"
       GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_KEY_ALIAS }}
       GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
