@@ -174,13 +174,37 @@ jobs:
             --export-release "Android AAB" "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
           test -s "$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
 
-      - name: Verify APK signatures
+      - name: Verify APK and AAB signatures
         shell: bash
         run: |
           set -euo pipefail
-          for apk in "$GITHUB_WORKSPACE"/build/android/*-release.apk; do
-            apksigner verify --verbose "$apk"
-          done
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/lib/android-sdk}}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner -perm -u+x 2>/dev/null | sort -V | tail -n 1)"
+          test -n "$APKSIGNER" && test -x "$APKSIGNER" || {
+            echo "ERRO: apksigner não encontrado em $SDK_ROOT/build-tools."
+            find "$SDK_ROOT" -maxdepth 5 -type f -name apksigner -print 2>/dev/null || true
+            exit 1
+          }
+
+          RELEASE_APK="$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}-release.apk"
+          AAB="$GITHUB_WORKSPACE/build/android/${EXPORT_NAME}.aab"
+          test -s "$RELEASE_APK"
+          test -s "$AAB"
+
+          echo "A verificar assinatura do APK Release..."
+          "$APKSIGNER" verify --verbose --print-certs "$RELEASE_APK"
+
+          echo "A verificar assinatura do Android App Bundle..."
+          jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1 || {
+            cat "$RUNNER_TEMP/aab-signature-check.txt"
+            exit 1
+          }
+          grep -q "jar verified." "$RUNNER_TEMP/aab-signature-check.txt" || {
+            cat "$RUNNER_TEMP/aab-signature-check.txt"
+            echo "ERRO: o AAB não apresentou confirmação de assinatura."
+            exit 1
+          }
+          echo "Assinaturas do APK Release e do AAB verificadas."
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
